@@ -8,7 +8,6 @@
 #include "opencv2/videoio.hpp"
 #include "opencv2/highgui.hpp"
 
-
 using namespace std;
 using namespace cv;
 
@@ -37,12 +36,12 @@ int main(int, char**)
 		vector<Point2f> corners;
 
 
-		if (findChessboardCorners(gray, patternSize, corners, CALIB_CB_FAST_CHECK + 
+		if (findChessboardCorners(gray, patternSize, corners, CALIB_CB_FAST_CHECK +
 			CV_CALIB_CB_ADAPTIVE_THRESH)) {
 			i++;
-			cout << i << endl; 
+			cout << i << endl;
 
-			cornerSubPix(gray, corners, Size(11,11), Size(-1,-1), 
+			cornerSubPix(gray, corners, Size(11,11), Size(-1,-1),
 				TermCriteria(TermCriteria::EPS+TermCriteria::COUNT, 30, 0.1));
 
 			drawChessboardCorners(original, patternSize, Mat(corners), true);
