@@ -23,20 +23,20 @@ void istInDerLinie(){
   float null, eins, zwei, drei, x, y;
   float A, B;
 
-  for (size_t i = 0; i < corners.size(); i++) {
+  for (int i = 0; i < corners.size(); i++) {
     x = corners[i].x;
     y = corners[i].y;
 
-    for( size_t i = 0; i < lParalelas.size(); i++ ){
-        null = lParalelas[i][0];
-        eins = lParalelas[i][1];
-        zwei = lParalelas[i][2];
-        drei = lParalelas[i][3];
+    for(int j = 0; j < lParalelas.size(); j++ ){
+        null = lParalelas[j][0];
+        eins = lParalelas[j][1];
+        zwei = lParalelas[j][2];
+        drei = lParalelas[j][3];
 
         A = (drei-eins)/(zwei-null);
         B = eins - A*null;
 
-        if (A*x + B == y) {
+        if (A*x + B - y < 0.0005 || A*x + B - y > -0.0005) {
           line(pontoLinha, Point(null, eins),
     				  Point(zwei, drei), Scalar(0,0,255), 5, 8 );
         }
@@ -44,7 +44,7 @@ void istInDerLinie(){
   }
 
   namedWindow("Detected Quinas nas Linhas", WINDOW_NORMAL);
-  resizeWindow("Detected Quinas nas Linhas", 640,480);
+  resizeWindow("DeteScted Quinas nas Linhas", 640,480);
   imshow( "Detected Quinas nas Linhas", pontoLinha);
 
 }
@@ -61,8 +61,7 @@ void quickSort(vector<float> &arr, int left, int right){
     int j = right;
     float pivot = arr[min];
 
-    while(left<j || i<right)
-    {
+    while(left<j || i<right) {
         while(arr[i]<pivot)
         i++;
         while(arr[j]>pivot)
@@ -117,12 +116,27 @@ void select_paralelas (vector<Vec4i> &lines) {
   		if ((angles[i] - angles[i+1] < 20 || angles[i] - angles[i+1] > -20) && !mesmo_angulo) {
         lParalelas.push_back(lines[i]);
         lParalelas.push_back(lines[i+1]);
+
+        // COMPARAR AQUI PRA ELIMINAR LINHAS MTO DISTANTES
+
+        // COMPARAR AQUI PRA ELIMINAR LINHAS MTO PROXIMAS
+
+        // Pensar nas seguintes situacoes ::: vaca mto perto
+                                          //  vaca mto longe
+
+        // fazer um degrade de cores pra conferir as linhas paralelas
+        // havendo padrao entre as que identificam a vaca 
+                              // tentar identificar e tchau migs
+
   			line( mitLines, Point(lines[i][0], lines[i][1]),
   					Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8 );
   			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
   					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,0,255), 3, 8 );
   			mesmo_angulo = true;
   		} else if (angles[i] - angles[i+1] < 20 || angles[i] - angles[i+1] > -20) {
+
+        // comparacao válida aqui tbm
+
         lParalelas.push_back(lines[i+1]);
   			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
   					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,0,255), 3, 8 );
@@ -158,7 +172,7 @@ void all_lines() {
 				line( grey, pt1, pt2, Scalar(0,0,255), 3, 8 );
 		}
 	#else
-		HoughLinesP( canny, lines, 1, CV_PI/180, 10, 10, 10);
+		HoughLinesP( canny, lines, 1, CV_PI/180, 50, 50, 10);
     select_paralelas(lines);
 
 		/*for( size_t i = 0; i < lines.size(); i++ ){
@@ -179,17 +193,14 @@ void morphOps(Mat &thresh){
 	Mat dilateElement = getStructuringElement( MORPH_RECT,Size(8,8));
 
 	erode(thresh,thresh,erodeElement);
-  erode(thresh,thresh,erodeElement);
+  //erode(thresh,thresh,erodeElement);
 
-	dilate(thresh,thresh,dilateElement);
+	//dilate(thresh,thresh,dilateElement);
   dilate(thresh,thresh,dilateElement);
 
 }
 
-void find_corners(){
-  //ACHA AS QUINAS E MARCA -> PRECISA MELHORAR E AJUSTAR
-  //MELHOR A FUNCAO
-
+void find_corners(){ // NAO MEXE NOS PARAMETROS PELO AMOR DE DEUS
   mitPunkte = src_grey.clone();
   pontoLinha = src_grey.clone();
 
@@ -199,7 +210,7 @@ void find_corners(){
   int blockSize = 3;
   bool useHarrisDetector = false;
   double k = 0.04;
-  int MAX_QUINAS = 40;
+  int MAX_QUINAS = 50;
 
   /// Apply corner detection
   goodFeaturesToTrack(mitPunkte, corners, MAX_QUINAS,
@@ -215,16 +226,13 @@ void find_corners(){
   }
 }
 
-  int main(){
-//int main( int argc, char** argv ){
+int main(){
 
   VideoCapture capture("vaquinha_melhor.mp4");
   if ( !capture.isOpened() ){
   	cout << "Cannot open the video file. \n";
   	return -1;
   }
-
-  //frame = imread( argv[1], 1 );
 
   namedWindow("vaquinhAgo", WINDOW_NORMAL);
   resizeWindow("vaquinhAgo", 640,480);
@@ -256,8 +264,6 @@ void find_corners(){
     namedWindow("Detected Quinas", WINDOW_NORMAL);
 	  resizeWindow("Detected Quinas", 640,480);
     imshow( "Detected Quinas", mitPunkte);
-
-    //waitKey(0);
 
 		if(waitKey(30) == 27){
       break;
