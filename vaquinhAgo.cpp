@@ -38,13 +38,13 @@ void istInDerLinie(){
         B = eins - A*null;
 
         if (A*x + B - y < 0.0005 || A*x + B - y > -0.0005) {
-          if (abs(anglesP[j]) > 85 && abs(anglesP[j]) < 95){
+          if (abs(anglesP[j]) > 80 && abs(anglesP[j]) < 100){
 
           line(pontoLinha, Point(null, eins),
     				  Point(zwei, drei), Scalar(0,0,255), 5, 8 );
         } else {
-          line(pontoLinha, Point(null, eins),
-    				  Point(zwei, drei), Scalar(0,255,0), 5, 8 );
+          /*line(pontoLinha, Point(null, eins),
+    				  Point(zwei, drei), Scalar(0,255,0), 5, 8 );*/
         }
       }
     }
@@ -89,6 +89,7 @@ void quickSort(vector<float> &arr, int left, int right){
     }
 }
 
+//no momento, essa funcao n tá sendo chamada
 int distancia_retas_paralelas(Vec4i line1, Vec4i line2){
   // extraindo pontos line1
   // reta s
@@ -122,9 +123,6 @@ int distancia_retas_paralelas(Vec4i line1, Vec4i line2){
 
   float distancia = 0;
   distancia = sqrt(r[0]*r[0]+r[1]*r[1]) * sin(theta);
-
-  cout << " aqui ";
-  cout << distancia << "  ";
 
 }
 
@@ -168,9 +166,6 @@ void select_paralelas (vector<Vec4i> &lines) {
 
           anglesP.push_back(angles[i]);
           anglesP.push_back(angles[i+1]);
-
-
-        // COMPARAR AQUI PRA ELIMINAR LINHAS MTO DISTANTES
 
         // COMPARAR AQUI PRA ELIMINAR LINHAS MTO PROXIMAS
 
@@ -306,7 +301,7 @@ void select_planos(){
 
 int main(){
 
-  VideoCapture capture("vaquinha_melhor.mp4");
+  VideoCapture capture("vaquinha.mp4");
   if ( !capture.isOpened() ){
   	cout << "Cannot open the video file. \n";
   	return -1;
@@ -328,9 +323,9 @@ int main(){
     lParalelas.clear();
 
 // FUNCOES PRINCIPAIS
-		all_lines();
-    find_corners();
-    istInDerLinie();
+		all_lines(); // pega todas as linhas e coloca num vec4f e dps chama select_paralelas(lines) pra selecionar só as paralelas
+    find_corners(); // usa o algoritmo shi pra achar pontos de interesse (quinas)
+    istInDerLinie(); // mantém as linhas que cruzam os pontos achados na funcao anterior
 
 
     imshow("vaquinhAgo", frame);
@@ -350,3 +345,4 @@ int main(){
 
   return 0;
 }
+// podia ter comentado em ingles, mas foda-se, só assim se acharem o código n entendem msm
