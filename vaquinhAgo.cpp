@@ -132,6 +132,7 @@ void select_paralelas (vector<Vec4i> &lines) {
   // TANGENTE DAS LINHAS
   angles.clear();
   anglesP.clear();
+  lParalelas.clear();
   float theta = 0;
   float null, eins, zwei, drei;
 
@@ -305,7 +306,7 @@ void select_planos(){
 
 int main(){
 
-  VideoCapture capture("vaquinha.mp4");
+  VideoCapture capture("vaquinha_melhor.mp4");
   if ( !capture.isOpened() ){
   	cout << "Cannot open the video file. \n";
   	return -1;
