@@ -18,6 +18,7 @@ Mat frame, HSV, canny, mitPunkte, mitLines, src_grey, pontoLinha;
 
 vector<Vec4i> lParalelas;
 vector<Point2f> corners;
+vector<float> angles, anglesP;
 
 void istInDerLinie(){
   float null, eins, zwei, drei, x, y;
@@ -37,14 +38,20 @@ void istInDerLinie(){
         B = eins - A*null;
 
         if (A*x + B - y < 0.0005 || A*x + B - y > -0.0005) {
+          if (abs(anglesP[j]) > 85 && abs(anglesP[j]) < 95){
+
           line(pontoLinha, Point(null, eins),
     				  Point(zwei, drei), Scalar(0,0,255), 5, 8 );
+        } else {
+          line(pontoLinha, Point(null, eins),
+    				  Point(zwei, drei), Scalar(0,255,0), 5, 8 );
         }
+      }
     }
   }
 
   namedWindow("Detected Quinas nas Linhas", WINDOW_NORMAL);
-  resizeWindow("DeteScted Quinas nas Linhas", 640,480);
+  resizeWindow("DeteScted Quinas nas Linhas", 640, 480);
   imshow( "Detected Quinas nas Linhas", pontoLinha);
 
 }
@@ -82,21 +89,61 @@ void quickSort(vector<float> &arr, int left, int right){
     }
 }
 
+int distancia_retas_paralelas(Vec4i line1, Vec4i line2){
+  // extraindo pontos line1
+  // reta s
+  int x1 = line1[0];
+  int y1 = line1[1];
+  int x2 = line1[2];
+  int y2 = line1[3];
+
+  //extraindo pontos line2 - reta t
+  int x3 = line2[0];
+  int y3 = line2[1];
+  int x4 = line2[2];
+  int y4 = line2[3];
+
+  Vec2f r = (x3-x1,y3-y1); // reta q sai de s e vai a t
+  Vec2f s = (x2-x1,y2-y1);
+
+  cout << r[0] << endl << r[1] << endl << s[0] << endl << s[1] << endl;
+
+  if (r[0] == s[0]) {
+    return abs((int)(r[1]-s[1]));
+  } else if (r[1] == s[1]) {
+    return abs((int)(r[0]-s[0]));
+  }
+
+  return 50;
+
+
+  float theta = 0;
+  theta = acos(s[0]*r[0]+ s[1]*r[1])/(sqrt(s[0]*s[0]+s[1]*s[1])*sqrt(r[0]*r[0]+r[1]*r[1]));
+
+  float distancia = 0;
+  distancia = sqrt(r[0]*r[0]+r[1]*r[1]) * sin(theta);
+
+  cout << " aqui ";
+  cout << distancia << "  ";
+
+}
+
 void select_paralelas (vector<Vec4i> &lines) {
   // TANGENTE DAS LINHAS
-	vector<float> angles;
-  float tang = 0;
+  angles.clear();
+  anglesP.clear();
+  float theta = 0;
   float null, eins, zwei, drei;
 
   for( size_t i = 0; i < lines.size(); i++ ){
-      tang = 0;
+      theta = 0;
       null = lines[i][0];
       eins = lines[i][1];
       zwei = lines[i][2];
       drei = lines[i][3];
 
-      tang = (atan2(drei-eins, zwei-null)) * 180.0 / CV_PI;
-      angles.push_back(tang);
+      theta = (atan2(drei-eins, zwei-null)) * 180.0 / CV_PI;
+      angles.push_back(theta);
       // TODAS OS VALORES DE TANGENTES SAO ADD NESSE VETOR
   }
 
@@ -113,9 +160,14 @@ void select_paralelas (vector<Vec4i> &lines) {
   // E ADICIONA NO VETOR lParalelas para uso posterior
   if (find_angles){
   	for (int i = 0; i < angles.size()-1; i++) {
-  		if ((angles[i] - angles[i+1] < 20 || angles[i] - angles[i+1] > -20) && !mesmo_angulo) {
-        lParalelas.push_back(lines[i]);
-        lParalelas.push_back(lines[i+1]);
+  		if ((angles[i] - angles[i+1] < 1 && angles[i] - angles[i+1] > -1) && !mesmo_angulo
+                ) {
+          lParalelas.push_back(lines[i]);
+          lParalelas.push_back(lines[i+1]);
+
+          anglesP.push_back(angles[i]);
+          anglesP.push_back(angles[i+1]);
+
 
         // COMPARAR AQUI PRA ELIMINAR LINHAS MTO DISTANTES
 
@@ -125,25 +177,46 @@ void select_paralelas (vector<Vec4i> &lines) {
                                           //  vaca mto longe
 
         // fazer um degrade de cores pra conferir as linhas paralelas
-        // havendo padrao entre as que identificam a vaca 
+        // havendo padrao entre as que identificam a vaca
                               // tentar identificar e tchau migs
 
-  			line( mitLines, Point(lines[i][0], lines[i][1]),
-  					Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8 );
-  			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
-  					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,0,255), 3, 8 );
-  			mesmo_angulo = true;
-  		} else if (angles[i] - angles[i+1] < 20 || angles[i] - angles[i+1] > -20) {
+          if (abs(angles[i]) > 85 && abs(angles[i]) < 95){
+            line( mitLines, Point(lines[i][0], lines[i][1]),
+      					Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8 );
+      			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
+      					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,0,255), 3, 8 );
 
+          } else {
+            line( mitLines, Point(lines[i][0], lines[i][1]),
+      					Point(lines[i][2], lines[i][3]), Scalar(0,255,0), 3, 8 );
+      			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
+      					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,255,0), 3, 8 );
+          }
+
+          mesmo_angulo = true;
+
+
+  		} else if (angles[i] - angles[i+1] < 1 && angles[i] - angles[i+1] > -1
+            ) {
+
+              anglesP.push_back(angles[i+1]);
+              lParalelas.push_back(lines[i+1]);
         // comparacao válida aqui tbm
+          if (abs(angles[i]) > 85 && abs(angles[i]) < 95){
+      			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
+      					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,0,255), 3, 8 );
+          } else {
 
-        lParalelas.push_back(lines[i+1]);
-  			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
-  					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,0,255), 3, 8 );
+      			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
+      					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,255,0), 3, 8 );
+          }
+
+
   		} else {
   			mesmo_angulo = false;
   		}
   	}
+
   }
 }
 
@@ -172,7 +245,7 @@ void all_lines() {
 				line( grey, pt1, pt2, Scalar(0,0,255), 3, 8 );
 		}
 	#else
-		HoughLinesP( canny, lines, 1, CV_PI/180, 50, 50, 10);
+		HoughLinesP( canny, lines, 1, CV_PI/180, 100, 50, 100);
     select_paralelas(lines);
 
 		/*for( size_t i = 0; i < lines.size(); i++ ){
@@ -226,9 +299,13 @@ void find_corners(){ // NAO MEXE NOS PARAMETROS PELO AMOR DE DEUS
   }
 }
 
+void select_planos(){
+
+}
+
 int main(){
 
-  VideoCapture capture("vaquinha_melhor.mp4");
+  VideoCapture capture("vaquinha.mp4");
   if ( !capture.isOpened() ){
   	cout << "Cannot open the video file. \n";
   	return -1;
