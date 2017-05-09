@@ -126,23 +126,23 @@ int distancia_retas_paralelas(Vec4i line1, Vec4i line2){
 
 }
 
-void select_paralelas (vector<Vec4i> &lines) {
+void filtrar_linhas (vector<Vec4i> &lines) {
   // TANGENTE DAS LINHAS
   angles.clear();
   anglesP.clear();
   lParalelas.clear();
-  float theta = 0;
+  float theta = 0.0;
   float null, eins, zwei, drei;
 
   for( size_t i = 0; i < lines.size(); i++ ){
-      theta = 0;
-      null = lines[i][0];
-      eins = lines[i][1];
-      zwei = lines[i][2];
-      drei = lines[i][3];
+      theta = 0.0;
+      null = lines[i][0]; //y1
+      eins = lines[i][1]; //x1
+      zwei = lines[i][2]; //y2
+      drei = lines[i][3]; //x2
 
-      theta = (atan2(drei-eins, zwei-null)) * 180.0 / CV_PI;
-      angles.push_back(theta);
+      theta = (atan2(zwei-null, drei-eins)) * 180.0 / CV_PI; // invertido
+      angles.push_back(abs(theta));
       // TODAS OS VALORES DE TANGENTES SAO ADD NESSE VETOR
   }
 
@@ -176,7 +176,7 @@ void select_paralelas (vector<Vec4i> &lines) {
         // havendo padrao entre as que identificam a vaca
                               // tentar identificar e tchau migs
 
-          if (abs(angles[i]) > 85 && abs(angles[i]) < 95){
+          if (angles[i] > 85 && angles[i] < 95){
             line( mitLines, Point(lines[i][0], lines[i][1]),
       					Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8 );
       			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
@@ -192,13 +192,12 @@ void select_paralelas (vector<Vec4i> &lines) {
           mesmo_angulo = true;
 
 
-  		} else if (angles[i] - angles[i+1] < 1 && angles[i] - angles[i+1] > -1
-            ) {
+  		} else if (angles[i] - angles[i+1] < 1 && angles[i] - angles[i+1] > -1) {
 
               anglesP.push_back(angles[i+1]);
               lParalelas.push_back(lines[i+1]);
         // comparacao válida aqui tbm
-          if (abs(angles[i]) > 85 && abs(angles[i]) < 95){
+          if (angles[i] > 85 && angles[i] < 95){
       			line( mitLines, Point(lines[i+1][0], lines[i+1][1]),
       					Point(lines[i+1][2], lines[i+1][3]), Scalar(0,0,255), 3, 8 );
           } else {
@@ -241,8 +240,9 @@ void all_lines() {
 				line( grey, pt1, pt2, Scalar(0,0,255), 3, 8 );
 		}
 	#else
-		HoughLinesP( canny, lines, 1, CV_PI/180, 100, 50, 100);
-    select_paralelas(lines);
+  // ultimos tres elementos                  (threshold, minLineLength, maxLineGap)
+		HoughLinesP( canny, lines, 1, CV_PI/180, 150, 30, 75);
+    filtrar_linhas(lines);
 
 		/*for( size_t i = 0; i < lines.size(); i++ ){
 				line( grey, Point(lines[i][0], lines[i][1]),
@@ -262,9 +262,9 @@ void morphOps(Mat &thresh){
 	Mat dilateElement = getStructuringElement( MORPH_RECT,Size(8,8));
 
 	erode(thresh,thresh,erodeElement);
-  //erode(thresh,thresh,erodeElement);
+  erode(thresh,thresh,erodeElement);
 
-	//dilate(thresh,thresh,dilateElement);
+	dilate(thresh,thresh,dilateElement);
   dilate(thresh,thresh,dilateElement);
 
 }
@@ -295,13 +295,9 @@ void find_corners(){ // NAO MEXE NOS PARAMETROS PELO AMOR DE DEUS
   }
 }
 
-void select_planos(){
-
-}
-
 int main(){
 
-  VideoCapture capture("vaquinha.mp4");
+  VideoCapture capture("vaquinha_melhor.mp4");
   if ( !capture.isOpened() ){
   	cout << "Cannot open the video file. \n";
   	return -1;
@@ -323,7 +319,7 @@ int main(){
     lParalelas.clear();
 
 // FUNCOES PRINCIPAIS
-		all_lines(); // pega todas as linhas e coloca num vec4f e dps chama select_paralelas(lines) pra selecionar só as paralelas
+		all_lines(); // pega todas as linhas e coloca num vec4f e dps chama filtrar_linhas(lines) pra selecionar só as paralelas
     find_corners(); // usa o algoritmo shi pra achar pontos de interesse (quinas)
     istInDerLinie(); // mantém as linhas que cruzam os pontos achados na funcao anterior
 
